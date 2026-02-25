@@ -74,7 +74,7 @@ export async function onRequestPost(context) {
     "{\"items\":[{\"name\":\"김치볶음밥\",\"estimated_grams\":250,\"kcal\":420}],\"total_kcal\":420,\"macros\":{\"carbs_g\":55,\"protein_g\":12,\"fat_g\":14},\"confidence\":0.62,\"notes\":\"대략 추정치\"}",
   ].join("\n");
 
-  const model = env?.GEMINI_MODEL || "gemini-2.0-flash";
+  const model = env?.GEMINI_MODEL || "gemini-2.5-flash-lite";
   const apiUrl =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent` +
     `?key=${encodeURIComponent(env.GEMINI_API_KEY)}`;
