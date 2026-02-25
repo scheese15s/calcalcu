@@ -145,8 +145,8 @@ class CalorieResult extends HTMLElement {
 // 커스텀 엘리먼트 등록
 customElements.define("calorie-result", CalorieResult);
 
-// URL에 ?debug가 있으면 에러 메시지에 상세 정보를 표시
-const isDebug = new URLSearchParams(window.location.search).has("debug");
+// 항상 디버그 상세 정보를 표시하도록 고정
+const isDebug = true;
 
 // 상태 텍스트 업데이트
 const setStatus = (text) => {
@@ -217,7 +217,7 @@ const analyzeImage = async () => {
     formData.append("image", file);
 
     // 서버에 이미지 전송
-    const ocrUrl = isDebug ? "/ocr?debug=1" : "/ocr";
+    const ocrUrl = "/ocr?debug=1";
     const response = await fetch(ocrUrl, {
       method: "POST",
       body: formData,
@@ -245,8 +245,8 @@ const analyzeImage = async () => {
     resultCard.hidden = false;
     setStatus("분석 완료");
   } catch (error) {
-    // 사용자에게 에러 메시지 표시 (debug일 때만 상세 표시)
-    setError(isDebug ? error.message : "실패했습니다.");
+    // 사용자에게 에러 메시지 표시
+    setError(error.message);
     setStatus("오류 발생");
   } finally {
     // 항상 로딩 종료
