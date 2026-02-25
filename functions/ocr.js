@@ -1,3 +1,4 @@
+// 공통 JSON 응답 헬퍼
 const jsonResponse = (payload, status = 200, headers = {}) => {
   return new Response(JSON.stringify(payload), {
     status,
@@ -8,6 +9,7 @@ const jsonResponse = (payload, status = 200, headers = {}) => {
   });
 };
 
+// 표준 에러 포맷으로 응답
 const errorResponse = (message, code, status, stage, details) => {
   const payload = { error: { message, code, stage } };
   if (details) {
@@ -16,6 +18,7 @@ const errorResponse = (message, code, status, stage, details) => {
   return jsonResponse(payload, status);
 };
 
+// 업로드된 파일을 base64 문자열로 변환
 const toBase64 = async (file) => {
   const buffer = await file.arrayBuffer();
   let binary = "";
@@ -27,9 +30,24 @@ const toBase64 = async (file) => {
   return btoa(binary);
 };
 
+// 응답 텍스트에 불필요한 문장이 섞였을 때 JSON 부분만 추출 시도
+const normalizeJsonText = (text) => {
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    return trimmed;
+  }
+  const first = trimmed.indexOf("{");
+  const last = trimmed.lastIndexOf("}");
+  if (first !== -1 && last !== -1 && last > first) {
+    return trimmed.slice(first, last + 1);
+  }
+  return trimmed;
+};
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
+  // 환경변수 검사
   if (!env?.GEMINI_API_KEY) {
     return errorResponse(
       "서버에 GEMINI_API_KEY가 설정되지 않았습니다.",
@@ -39,6 +57,7 @@ export async function onRequestPost(context) {
     );
   }
 
+  // multipart/form-data 파싱
   let formData;
   try {
     formData = await request.formData();
@@ -52,6 +71,7 @@ export async function onRequestPost(context) {
     );
   }
 
+  // 이미지 파일 추출
   const imageFile = formData.get("image");
   if (!imageFile || typeof imageFile.arrayBuffer !== "function") {
     return errorResponse(
@@ -62,6 +82,7 @@ export async function onRequestPost(context) {
     );
   }
 
+  // Gemini에 전달할 프롬프트 구성
   const base64Image = await toBase64(imageFile);
   const prompt = [
     "음식 사진을 보고 엄격한 JSON만 반환하세요.",
@@ -74,11 +95,13 @@ export async function onRequestPost(context) {
     "{\"items\":[{\"name\":\"김치볶음밥\",\"estimated_grams\":250,\"kcal\":420}],\"total_kcal\":420,\"macros\":{\"carbs_g\":55,\"protein_g\":12,\"fat_g\":14},\"confidence\":0.62,\"notes\":\"대략 추정치\"}",
   ].join("\n");
 
+  // 사용할 모델 (환경변수 우선, 없으면 기본값)
   const model = env?.GEMINI_MODEL || "gemini-2.5-flash-lite";
   const apiUrl =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent` +
     `?key=${encodeURIComponent(env.GEMINI_API_KEY)}`;
 
+  // Gemini API 호출
   let geminiResponse;
   try {
     geminiResponse = await fetch(apiUrl, {
@@ -115,6 +138,7 @@ export async function onRequestPost(context) {
     );
   }
 
+  // 상위 API 에러 처리
   if (!geminiResponse.ok) {
     const status = geminiResponse.status;
     const detail = await geminiResponse.json().catch(() => null);
@@ -128,6 +152,7 @@ export async function onRequestPost(context) {
     });
   }
 
+  // 상위 API 응답 JSON 파싱
   let geminiPayload;
   try {
     geminiPayload = await geminiResponse.json();
@@ -141,6 +166,7 @@ export async function onRequestPost(context) {
     );
   }
 
+  // 모델 응답 텍스트 추출
   const text = geminiPayload?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) {
     return errorResponse(
@@ -153,7 +179,8 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const parsed = JSON.parse(text);
+    const normalized = normalizeJsonText(text);
+    const parsed = JSON.parse(normalized);
     return jsonResponse(parsed);
   } catch (error) {
     return errorResponse(
@@ -161,12 +188,13 @@ export async function onRequestPost(context) {
       "invalid_json",
       502,
       "parse_ai_json",
-      error?.message,
+      { message: error?.message, raw: text.slice(0, 500) },
     );
   }
 }
 
 export async function onRequest(context) {
+  // POST 외 요청은 거부
   if (context.request.method !== "POST") {
     return jsonResponse(
       { error: { message: "허용되지 않은 요청입니다.", code: "method_not_allowed" } },

@@ -10,15 +10,20 @@
   <link href="/style.css" rel="stylesheet">
 </head>
 <body>
+  <!-- 배경 분위기를 위한 장식 레이어 (콘텐츠와 분리) -->
   <div class="ambient"></div>
+  <!-- 페이지의 메인 콘텐츠 컨테이너 -->
   <main class="shell">
+    <!-- 상단 안내 영역: 서비스 소개 -->
     <header class="hero">
       <span class="badge">Food Vision Lab</span>
       <h1>음식 사진으로 칼로리를 추정해보세요</h1>
       <p>사진 한 장으로 음식 종류, 대략 중량, 칼로리와 탄단지를 추정합니다.</p>
     </header>
 
+    <!-- 업로드/분석 조작 패널 -->
     <section class="panel">
+      <!-- 패널 헤더: 제목 + 현재 상태 표시 -->
       <div class="panel__top">
         <div>
           <h2>사진 업로드</h2>
@@ -27,15 +32,20 @@
         <div class="status" id="statusText">준비 완료</div>
       </div>
 
+      <!-- 주요 컨트롤 버튼들 -->
       <div class="controls">
+        <!-- 파일 선택: 카메라 촬영 또는 앨범에서 선택 -->
         <label class="btn btn--primary" for="imageInput">
           <input id="imageInput" type="file" accept="image/*" />
           사진 촬영/업로드
         </label>
+        <!-- 선택 취소/초기화 -->
         <button class="btn btn--ghost" id="resetBtn" type="button">다시 선택</button>
+        <!-- 분석 요청: 이미지가 있을 때만 활성화 -->
         <button class="btn btn--accent" id="analyzeBtn" type="button" disabled>분석 시작</button>
       </div>
 
+      <!-- 이미지 미리보기 -->
       <div class="preview">
         <img id="previewImage" alt="선택한 음식 사진 미리보기" />
         <div class="preview__placeholder">
@@ -44,6 +54,7 @@
         </div>
       </div>
 
+      <!-- 로딩/에러 피드백 영역 -->
       <div class="feedback">
         <div class="loading" id="loading" hidden>
           <span class="spinner"></span>
@@ -53,6 +64,7 @@
       </div>
     </section>
 
+    <!-- 분석 결과 카드 -->
     <section class="result">
       <calorie-result id="resultCard" hidden></calorie-result>
       <p class="disclaimer">추정치이며 실제와 오차가 있을 수 있음</p>
