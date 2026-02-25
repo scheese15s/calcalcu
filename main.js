@@ -11,8 +11,6 @@ const loadingEl = document.getElementById("loading");
 const errorEl = document.getElementById("error");
 const statusText = document.getElementById("statusText");
 const resultCard = document.getElementById("resultCard");
-// ?debug가 있으면 에러 메시지에 상세 정보를 표시
-const isDebug = new URLSearchParams(window.location.search).has("debug");
 
 // 결과 카드 UI를 렌더링하는 커스텀 엘리먼트
 class CalorieResult extends HTMLElement {
@@ -225,16 +223,7 @@ const analyzeImage = async () => {
 
     // 서버 응답이 에러인 경우 처리
     if (!response.ok) {
-      const baseMessage = payload?.error?.message || "분석에 실패했습니다. 잠시 후 다시 시도해주세요.";
-      if (isDebug && payload?.error) {
-        const { code, stage, details } = payload.error;
-        const detailText =
-          details && typeof details === "object" ? JSON.stringify(details) : details || "";
-        const debugInfo = [code && `code=${code}`, stage && `stage=${stage}`, detailText]
-          .filter(Boolean)
-          .join(" | ");
-        throw new Error(debugInfo ? `${baseMessage} (${debugInfo})` : baseMessage);
-      }
+      const baseMessage = payload?.error?.message || "실패했습니다.";
       throw new Error(baseMessage);
     }
 
@@ -244,7 +233,7 @@ const analyzeImage = async () => {
     setStatus("분석 완료");
   } catch (error) {
     // 사용자에게 에러 메시지 표시
-    setError(error.message);
+    setError("실패했습니다.");
     setStatus("오류 발생");
   } finally {
     // 항상 로딩 종료
