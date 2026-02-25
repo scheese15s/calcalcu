@@ -261,6 +261,10 @@
     background: rgba(255, 120, 120, 0.15);
     color: oklch(35% 0.15 25);
     font-weight: 600;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .result {
