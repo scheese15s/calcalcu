@@ -1,14 +1,64 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+  <title>CalCalcu | 음식 사진 칼로리 추정</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="/style.css" rel="stylesheet">
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
-  <script defer type="text/javascript" src="/main.js"></script>
+  <div class="ambient"></div>
+  <main class="shell">
+    <header class="hero">
+      <span class="badge">Food Vision Lab</span>
+      <h1>음식 사진으로 칼로리를 추정해보세요</h1>
+      <p>사진 한 장으로 음식 종류, 대략 중량, 칼로리와 탄단지를 추정합니다.</p>
+    </header>
+
+    <section class="panel">
+      <div class="panel__top">
+        <div>
+          <h2>사진 업로드</h2>
+          <p>카메라 촬영 또는 파일을 선택하세요.</p>
+        </div>
+        <div class="status" id="statusText">준비 완료</div>
+      </div>
+
+      <div class="controls">
+        <label class="btn btn--primary" for="imageInput">
+          <input id="imageInput" type="file" accept="image/*" capture="environment" />
+          사진 촬영/업로드
+        </label>
+        <button class="btn btn--ghost" id="resetBtn" type="button">다시 선택</button>
+        <button class="btn btn--accent" id="analyzeBtn" type="button" disabled>분석 시작</button>
+      </div>
+
+      <div class="preview">
+        <img id="previewImage" alt="선택한 음식 사진 미리보기" />
+        <div class="preview__placeholder">
+          <div class="preview__icon"></div>
+          <p>선택한 사진이 여기에 표시됩니다.</p>
+        </div>
+      </div>
+
+      <div class="feedback">
+        <div class="loading" id="loading" hidden>
+          <span class="spinner"></span>
+          분석 중입니다. 잠시만 기다려주세요.
+        </div>
+        <div class="error" id="error" hidden></div>
+      </div>
+    </section>
+
+    <section class="result">
+      <calorie-result id="resultCard" hidden></calorie-result>
+      <p class="disclaimer">추정치이며 실제와 오차가 있을 수 있음</p>
+    </section>
+  </main>
+
+  <script defer type="module" src="/main.js"></script>
 </body>
 </html>
