@@ -38,16 +38,40 @@ const toBase64 = async (file) => {
   return btoa(binary);
 };
 
-// 응답 텍스트에 불필요한 문장이 섞였을 때 JSON 부분만 추출 시도
-const normalizeJsonText = (text) => {
+// 응답 텍스트에 잡음이 섞였을 때 첫 번째 JSON 객체만 안전하게 추출
+const extractJsonObject = (text) => {
   const trimmed = text.trim();
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+  const start = trimmed.indexOf("{");
+  if (start === -1) {
     return trimmed;
   }
-  const first = trimmed.indexOf("{");
-  const last = trimmed.lastIndexOf("}");
-  if (first !== -1 && last !== -1 && last > first) {
-    return trimmed.slice(first, last + 1);
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < trimmed.length; i += 1) {
+    const char = trimmed[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === "\"") {
+        inString = false;
+      }
+      continue;
+    }
+    if (char === "\"") {
+      inString = true;
+      continue;
+    }
+    if (char === "{") {
+      depth += 1;
+    } else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return trimmed.slice(start, i + 1);
+      }
+    }
   }
   return trimmed;
 };
@@ -188,8 +212,8 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const normalized = normalizeJsonText(text);
-    const parsed = JSON.parse(normalized);
+    const extracted = extractJsonObject(text);
+    const parsed = JSON.parse(extracted);
     return jsonResponse(parsed);
   } catch (error) {
     return errorResponse(
