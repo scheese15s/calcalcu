@@ -145,6 +145,9 @@ class CalorieResult extends HTMLElement {
 // 커스텀 엘리먼트 등록
 customElements.define("calorie-result", CalorieResult);
 
+// URL에 ?debug가 있으면 에러 메시지에 상세 정보를 표시
+const isDebug = new URLSearchParams(window.location.search).has("debug");
+
 // 상태 텍스트 업데이트
 const setStatus = (text) => {
   statusText.textContent = text;
@@ -224,6 +227,15 @@ const analyzeImage = async () => {
     // 서버 응답이 에러인 경우 처리
     if (!response.ok) {
       const baseMessage = payload?.error?.message || "실패했습니다.";
+      if (isDebug && payload?.error) {
+        const { code, stage, details } = payload.error;
+        const detailText =
+          details && typeof details === "object" ? JSON.stringify(details) : details || "";
+        const debugInfo = [code && `code=${code}`, stage && `stage=${stage}`, detailText]
+          .filter(Boolean)
+          .join(" | ");
+        throw new Error(debugInfo ? `${baseMessage} (${debugInfo})` : baseMessage);
+      }
       throw new Error(baseMessage);
     }
 
@@ -232,8 +244,8 @@ const analyzeImage = async () => {
     resultCard.hidden = false;
     setStatus("분석 완료");
   } catch (error) {
-    // 사용자에게 에러 메시지 표시
-    setError("실패했습니다.");
+    // 사용자에게 에러 메시지 표시 (debug일 때만 상세 표시)
+    setError(isDebug ? error.message : "실패했습니다.");
     setStatus("오류 발생");
   } finally {
     // 항상 로딩 종료
