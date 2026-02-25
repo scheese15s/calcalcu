@@ -24,7 +24,7 @@ class CalorieResult extends HTMLElement {
         }
         h3 {
           margin: 0 0 16px;
-          font-family: "Playfair Display", "Times New Roman", serif;
+          font-family: "Source Sans 3", system-ui, -apple-system, sans-serif;
           font-size: 1.5rem;
         }
         .grid {

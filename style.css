@@ -21,7 +21,7 @@
 
   body {
     margin: 0;
-    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    font-family: "Source Sans 3", system-ui, -apple-system, sans-serif;
     color: var(--ink);
     background:
       radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.95), transparent 55%),
@@ -33,7 +33,7 @@
 
   h1,
   h2 {
-    font-family: "Playfair Display", "Times New Roman", serif;
+    font-family: "Source Sans 3", system-ui, -apple-system, sans-serif;
     margin: 0;
   }
 
