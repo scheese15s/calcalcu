@@ -126,7 +126,7 @@ export async function onRequestPost(context) {
   ].join("\n");
 
   // 사용할 모델 (환경변수 우선, 없으면 기본값)
-  const model = env?.GEMINI_MODEL || "gemini-2.5-flash-lite";
+  const model = env?.GEMINI_MODEL || "gemini-2.5-flash";
   const apiUrl =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent` +
     `?key=${encodeURIComponent(env.GEMINI_API_KEY)}`;
