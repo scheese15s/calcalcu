@@ -217,7 +217,8 @@ const analyzeImage = async () => {
     formData.append("image", file);
 
     // 서버에 이미지 전송
-    const response = await fetch("/ocr", {
+    const ocrUrl = isDebug ? "/ocr?debug=1" : "/ocr";
+    const response = await fetch(ocrUrl, {
       method: "POST",
       body: formData,
     });
