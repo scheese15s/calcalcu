@@ -1,10 +1,19 @@
-const jsonResponse = (payload, status = 200) => {
+const jsonResponse = (payload, status = 200, headers = {}) => {
   return new Response(JSON.stringify(payload), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
+      ...headers,
     },
   });
+};
+
+const errorResponse = (message, code, status, stage, details) => {
+  const payload = { error: { message, code, stage } };
+  if (details) {
+    payload.error.details = details;
+  }
+  return jsonResponse(payload, status);
 };
 
 const toBase64 = async (file) => {
@@ -22,9 +31,11 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   if (!env?.GEMINI_API_KEY) {
-    return jsonResponse(
-      { error: { message: "서버에 GEMINI_API_KEY가 설정되지 않았습니다.", code: "missing_api_key" } },
+    return errorResponse(
+      "서버에 GEMINI_API_KEY가 설정되지 않았습니다.",
+      "missing_api_key",
       500,
+      "env_check",
     );
   }
 
@@ -32,17 +43,22 @@ export async function onRequestPost(context) {
   try {
     formData = await request.formData();
   } catch (error) {
-    return jsonResponse(
-      { error: { message: "이미지 업로드 형식이 올바르지 않습니다.", code: "invalid_form" } },
+    return errorResponse(
+      "이미지 업로드 형식이 올바르지 않습니다.",
+      "invalid_form",
       400,
+      "parse_form",
+      error?.message,
     );
   }
 
   const imageFile = formData.get("image");
   if (!imageFile || typeof imageFile.arrayBuffer !== "function") {
-    return jsonResponse(
-      { error: { message: "이미지 파일을 찾아볼 수 없습니다.", code: "missing_image" } },
+    return errorResponse(
+      "이미지 파일을 찾아볼 수 없습니다.",
+      "missing_image",
       400,
+      "get_image",
     );
   }
 
@@ -89,9 +105,12 @@ export async function onRequestPost(context) {
       }),
     });
   } catch (error) {
-    return jsonResponse(
-      { error: { message: "AI 서버에 연결할 수 없습니다.", code: "upstream_unreachable" } },
+    return errorResponse(
+      "AI 서버에 연결할 수 없습니다.",
+      "upstream_unreachable",
       502,
+      "call_upstream",
+      error?.message,
     );
   }
 
@@ -102,15 +121,33 @@ export async function onRequestPost(context) {
       status === 429
         ? "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
         : detail?.error?.message || "AI 분석에 실패했습니다.";
-    return jsonResponse({ error: { message, code: "upstream_error" } }, status);
+    return errorResponse(message, "upstream_error", status, "upstream_response", {
+      status,
+      upstream: detail?.error || detail,
+    });
   }
 
-  const geminiPayload = await geminiResponse.json();
+  let geminiPayload;
+  try {
+    geminiPayload = await geminiResponse.json();
+  } catch (error) {
+    return errorResponse(
+      "AI 응답을 해석할 수 없습니다.",
+      "invalid_ai_response",
+      502,
+      "parse_upstream_json",
+      error?.message,
+    );
+  }
+
   const text = geminiPayload?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) {
-    return jsonResponse(
-      { error: { message: "AI 응답을 해석할 수 없습니다.", code: "invalid_ai_response" } },
+    return errorResponse(
+      "AI 응답을 해석할 수 없습니다.",
+      "invalid_ai_response",
       502,
+      "extract_text",
+      geminiPayload,
     );
   }
 
@@ -118,9 +155,12 @@ export async function onRequestPost(context) {
     const parsed = JSON.parse(text);
     return jsonResponse(parsed);
   } catch (error) {
-    return jsonResponse(
-      { error: { message: "AI가 JSON 형식으로 응답하지 않았습니다.", code: "invalid_json" } },
+    return errorResponse(
+      "AI가 JSON 형식으로 응답하지 않았습니다.",
+      "invalid_json",
       502,
+      "parse_ai_json",
+      error?.message,
     );
   }
 }

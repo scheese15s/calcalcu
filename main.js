@@ -7,6 +7,7 @@ const loadingEl = document.getElementById("loading");
 const errorEl = document.getElementById("error");
 const statusText = document.getElementById("statusText");
 const resultCard = document.getElementById("resultCard");
+const isDebug = new URLSearchParams(window.location.search).has("debug");
 
 class CalorieResult extends HTMLElement {
   constructor() {
@@ -202,8 +203,17 @@ const analyzeImage = async () => {
     const payload = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = payload?.error?.message || "분석에 실패했습니다. 잠시 후 다시 시도해주세요.";
-      throw new Error(message);
+      const baseMessage = payload?.error?.message || "분석에 실패했습니다. 잠시 후 다시 시도해주세요.";
+      if (isDebug && payload?.error) {
+        const { code, stage, details } = payload.error;
+        const detailText =
+          details && typeof details === "object" ? JSON.stringify(details) : details || "";
+        const debugInfo = [code && `code=${code}`, stage && `stage=${stage}`, detailText]
+          .filter(Boolean)
+          .join(" | ");
+        throw new Error(debugInfo ? `${baseMessage} (${debugInfo})` : baseMessage);
+      }
+      throw new Error(baseMessage);
     }
 
     resultCard.data = payload;
