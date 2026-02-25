@@ -1,3 +1,6 @@
+// AI EDIT NOTE:
+// 앞으로 이 파일을 수정할 때마다 초보자도 이해할 수 있도록
+// 주요 섹션/블록에 설명 주석을 자세히 추가·유지하세요.
 // DOM 요소 참조 (재사용을 위해 상단에서 한 번만 가져옴)
 const imageInput = document.getElementById("imageInput");
 const previewImage = document.getElementById("previewImage");
